@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CRM Dashboard</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            background: #f4f7fb;
+            font-family: Arial, sans-serif;
+        }
+
+        .navbar {
+            background: #172554;
+        }
+
+        .navbar-brand {
+            color: white;
+            font-weight: bold;
+            font-size: 23px;
+        }
+
+        .navbar-brand:hover {
+            color: #dbeafe;
+        }
+
+        .page-title {
+            color: #172554;
+            font-weight: bold;
+        }
+
+        .stat-card {
+            border: none;
+            border-radius: 14px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .stat-label {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #172554;
+        }
+
+        .chart-card,
+        .table-card {
+            background: white;
+            border-radius: 14px;
+            padding: 22px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            height: 100%;
+        }
+
+        .section-title {
+            font-size: 19px;
+            font-weight: bold;
+            color: #172554;
+            margin-bottom: 20px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            border-color: #2563eb;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        footer {
+            color: #64748b;
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid px-4">
+
+            <a class="navbar-brand" href="{% url 'dashboard' %}">
+                CRM System
+            </a>
+
+            <button class="navbar-toggler bg-light" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarMenu">
+
+                <div class="navbar-nav ms-auto align-items-lg-center gap-2">
+
+                    <a class="btn btn-outline-light btn-sm" href="{% url 'dashboard' %}">
+                        Dashboard
+                    </a>
+
+                    <a class="btn btn-outline-light btn-sm" href="{% url 'lead_list' %}">
+                        Manage Leads
+                    </a>
+
+                    <a class="btn btn-primary btn-sm" href="{% url 'add_lead' %}">
+                        + Add Lead
+                    </a>
+
+                    <a class="btn btn-outline-light btn-sm" href="/admin/">
+                        Admin
+                    </a>
+
+                </div>
+            </div>
+
+        </div>
+    </nav>
+
+
+    <!-- MAIN CONTENT -->
+    <div class="container-fluid px-4 py-4">
+
+        <!-- HEADER -->
+        <div class="d-flex flex-wrap justify-content-between
+                align-items-center mb-4">
+
+            <div>
+                <h1 class="page-title mb-1">Dashboard Overview</h1>
+
+                <p class="text-secondary mb-0">
+                    Monitor your leads, sales pipeline and customers.
+                </p>
+            </div>
+
+            <a href="{% url 'add_lead' %}" class="btn btn-primary mt-3 mt-md-0">
+                + Create New Lead
+            </a>
+
+        </div>
+
+
+        <!-- STATISTICS CARDS -->
+        <div class="row g-4 mb-4">
+
+            <div class="col-12 col-sm-6 col-xl">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <p class="stat-label mb-2">Total Leads</p>
+                        <div class="stat-number">{{ total_leads }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <p class="stat-label mb-2">New Leads</p>
+                        <div class="stat-number">{{ new_leads }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <p class="stat-label mb-2">Qualified Leads</p>
+                        <div class="stat-number">{{ qualified_leads }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <p class="stat-label mb-2">Closed Leads</p>
+                        <div class="stat-number">{{ closed_leads }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <p class="stat-label mb-2">Total Customers</p>
+                        <div class="stat-number">{{ total_customers }}</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+
+        <!-- CHARTS -->
+        <div class="row g-4 mb-4">
+
+            <!-- LEAD STATUS DOUGHNUT CHART -->
+            <div class="col-12 col-lg-6">
+
+                <div class="chart-card">
+
+                    <h5 class="section-title">Lead Status Distribution</h5>
+
+                    <div class="chart-container">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- LEAD SOURCE BAR CHART -->
+            <div class="col-12 col-lg-6">
+
+                <div class="chart-card">
+
+                    <h5 class="section-title">Lead Sources</h5>
+
+                    <div class="chart-container">
+                        <canvas id="sourceChart"></canvas>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- SALES PIPELINE -->
+            <div class="col-12">
+
+                <div class="chart-card">
+
+                    <h5 class="section-title">Sales Pipeline Overview</h5>
+
+                    <div class="chart-container">
+                        <canvas id="pipelineChart"></canvas>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- RECENT LEADS TABLE -->
+        <div class="table-card mb-4">
+
+            <div class="d-flex flex-wrap justify-content-between
+                    align-items-center mb-3">
+
+                <h5 class="section-title mb-0">Recent Leads</h5>
+
+                <a href="{% url 'lead_list' %}" class="btn btn-outline-primary btn-sm">
+                    View All Leads
+                </a>
+
+            </div>
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Company</th>
+                            <th>Source</th>
+                            <th>Status</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for lead in recent_leads %}
+
+                        <tr>
+                            <td class="fw-semibold">{{ lead.name }}</td>
+                            <td>{{ lead.email }}</td>
+                            <td>{{ lead.company|default:"—" }}</td>
+                            <td>{{ lead.source }}</td>
+
+                            <td>
+                                {% if lead.status == 'New' %}
+                                <span class="badge bg-primary">New</span>
+
+                                {% elif lead.status == 'Contacted' %}
+                                <span class="badge bg-info text-dark">Contacted</span>
+
+                                {% elif lead.status == 'Qualified' %}
+                                <span class="badge bg-success">Qualified</span>
+
+                                {% elif lead.status == 'Proposal' %}
+                                <span class="badge bg-warning text-dark">Proposal</span>
+
+                                {% elif lead.status == 'Closed' %}
+                                <span class="badge bg-secondary">Closed</span>
+
+                                {% else %}
+                                <span class="badge bg-light text-dark">
+                                    {{ lead.status }}
+                                </span>
+                                {% endif %}
+                            </td>
+
+                            <td>{{ lead.score }}</td>
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+                            <td colspan="6" class="text-center text-secondary py-4">
+                                No leads available yet.
+                                <a href="{% url 'add_lead' %}">Add your first lead</a>.
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <footer class="text-center py-3">
+            CRM Lead Management System | Dashboard
+        </footer>
+
+    </div>
+
+
+    <!-- BOOTSTRAP JAVASCRIPT -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+
+    <!-- CHART.JS -->
+    {{ status_data|json_script:"status-data" }}
+    {{ source_data|json_script:"source-data" }}
+    {{ pipeline_statuses|json_script:"pipeline-statuses" }}
+    {{ pipeline_data|json_script:"pipeline-data" }}
+
+    <script>
+        const statusData = JSON.parse(
+            document.getElementById("status-data").textContent
+        );
+
+        const sourceData = JSON.parse(
+            document.getElementById("source-data").textContent
+        );
+
+        const pipelineStatuses = JSON.parse(
+            document.getElementById("pipeline-statuses").textContent
+        );
+
+        const pipelineData = JSON.parse(
+            document.getElementById("pipeline-data").textContent
+        );
+
+
+        // 1. LEAD STATUS DOUGHNUT CHART
+        new Chart(document.getElementById("statusChart"), {
+            type: "doughnut",
+
+            data: {
+                labels: statusData.map(item => item.status),
+
+                datasets: [{
+                    label: "Number of Leads",
+                    data: statusData.map(item => item.total),
+                    backgroundColor: [
+                        "#3b82f6",
+                        "#06b6d4",
+                        "#22c55e",
+                        "#f59e0b",
+                        "#64748b"
+                    ],
+                    borderWidth: 2,
+                    borderColor: "#ffffff"
+                }]
+            },
+
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+
+                plugins: {
+                    legend: {
+                        position: "bottom"
+                    }
+                }
+            }
+        });
+
+
+        // 2. LEAD SOURCE BAR CHART
+        new Chart(document.getElementById("sourceChart"), {
+            type: "bar",
+
+            data: {
+                labels: sourceData.map(item => item.source),
+
+                datasets: [{
+                    label: "Leads by Source",
+                    data: sourceData.map(item => item.total),
+                    backgroundColor: "#3b82f6",
+                    borderRadius: 6
+                }]
+            },
+
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                },
+
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+
+
+        // 3. SALES PIPELINE BAR CHART
+        new Chart(document.getElementById("pipelineChart"), {
+            type: "bar",
+
+            data: {
+                labels: pipelineStatuses,
+
+                datasets: [{
+                    label: "Number of Leads",
+                    data: pipelineData,
+                    backgroundColor: [
+                        "#3b82f6",
+                        "#06b6d4",
+                        "#22c55e",
+                        "#f59e0b",
+                        "#64748b"
+                    ],
+                    borderRadius: 6
+                }]
+            },
+
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                },
+
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    </script>
+
+</body>
+
+</html>
