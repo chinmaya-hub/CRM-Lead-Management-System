@@ -1,6 +1,0 @@
-Django==4.2.30
-mysqlclient
-djangorestframework
-django-filter
-django-import-export
-Pillow
